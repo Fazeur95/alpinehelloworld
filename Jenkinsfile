@@ -61,13 +61,24 @@ pipeline {
           steps {
              script {
                sh '''
-                   echo $DOCKERHUB_PASSWORD_PSW | docker login -u faouizi.mzebla@ynov.com --password-stdin
+                   echo $DOCKERHUB_PASSWORD_PSW | docker login -u $ID_DOCKER --password-stdin
                    docker push ${ID_DOCKER}/$IMAGE_NAME:$IMAGE_TAG
                '''
              }
           }
       }    
-     
+     stage('Install Node.js') {
+    agent any
+    steps {
+        script {
+            sh '''
+                curl -sL https://deb.nodesource.com/setup_14.x | bash -
+                apt-get install -y nodejs
+            '''
+        }
+    }
+}
+
      stage('Push image in staging and deploy it') {
        when {
               expression { GIT_BRANCH == 'origin/master' }
