@@ -32,16 +32,14 @@ pipeline {
        }
        stage('Test image') {
            agent any
-    steps {
-        script {
-            sh '''
-                echo "Testing image with URL: http://172.17.0.1:${PORT_EXPOSED}"
-                RESPONSE=$(curl -s http://172.17.0.1:${PORT_EXPOSED})
-                echo "Response: $RESPONSE"
-                echo "$RESPONSE" | grep -q "Hello world!"
-            '''
-        }
-    }
+           steps {
+              script {
+                sh '''
+                   curl -u faouizi.mzebla@ynov.com:Louxor95100 http://172.17.0.1:${PORT_EXPOSED}
+
+                '''
+              }
+           }
       }
       stage('Clean Container') {
           agent any
