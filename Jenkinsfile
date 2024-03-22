@@ -67,19 +67,21 @@ pipeline {
              }
           }
       }    
- stage('Install Node.js') {
+stage('Install Node.js') {
     agent any
     steps {
         script {
             sh '''
                 curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.1/install.sh | bash
-                source ~/.bashrc
+                export NVM_DIR="$HOME/.nvm"
+                [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
                 nvm install 14
                 nvm use 14
             '''
         }
     }
 }
+
 
 
      stage('Push image in staging and deploy it') {
