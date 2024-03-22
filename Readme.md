@@ -1,1 +1,1 @@
-(last|first)[Failed|Successful|Unsuccessful|Stable|Unstable|Completed][:${params.<BuildParamerName>=<BuildParameterValue>}]
+![Build Status](http://localhost:8080/buildStatus/icon?job=deployment&style=flat)
