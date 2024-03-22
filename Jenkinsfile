@@ -5,7 +5,7 @@ pipeline {
         IMAGE_TAG = "latest"
         STAGING = "${ID_DOCKER}-staging"
         PRODUCTION = "${ID_DOCKER}-production"
-        DOCKERHUB_PASSWORD_PSW = "${DOCKERHUB_PASSWORD_PSW}"
+    
     }
     agent any
     stages {
