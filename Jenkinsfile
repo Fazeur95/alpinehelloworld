@@ -92,24 +92,5 @@ pipeline {
                 }
             }
         }
-        stage('Push image in production and deploy it') {
-            when {
-                expression { GIT_BRANCH == 'origin/production' }
-            }
-            environment {
-                HEROKU_API_KEY = credentials('heroku_api_key')
-            }  
-            steps {
-                script {
-                    sh '''
-                        export PATH="$HOME/.nvm/versions/node/v14.21.3/bin:$PATH"
-                        heroku container:login
-                        heroku create $PRODUCTION || echo "project already exist"
-                        heroku container:push -a $PRODUCTION web
-                        heroku container:release -a $PRODUCTION web
-                    '''
-                }
-            }
-        }
     }
 }
