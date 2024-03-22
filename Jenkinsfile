@@ -72,13 +72,17 @@ stage('Install Node.js and Heroku CLI') {
     steps {
         script {
             sh '''
-                curl -sL https://deb.nodesource.com/setup_14.x | sudo -E bash -
-                sudo apt-get install -y nodejs
+                curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.1/install.sh | bash
+                export NVM_DIR="$HOME/.nvm"
+                [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
+                nvm install 14
+                nvm use 14
                 npm install -g heroku@7.68.0
             '''
         }
     }
 }
+
 
 stage('Push image in staging and deploy it') {
     when {
