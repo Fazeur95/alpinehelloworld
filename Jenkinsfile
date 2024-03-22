@@ -68,7 +68,7 @@ pipeline {
                         [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
                         nvm install 14
                         nvm use 14
-                        npm install -g heroku@7.68.0
+                        npm install -g heroku@8.11.0
                     '''
                 }
             }
