@@ -67,17 +67,18 @@ pipeline {
              }
           }
       }    
-     stage('Install Node.js') {
+ stage('Install Node.js') {
     agent any
     steps {
         script {
             sh '''
-                curl -sL https://deb.nodesource.com/setup_14.x | bash -
-                apt-get install -y nodejs
+                curl -sL https://deb.nodesource.com/setup_14.x | sudo -E bash -
+                sudo apt-get install -y nodejs
             '''
         }
     }
 }
+
 
      stage('Push image in staging and deploy it') {
        when {
