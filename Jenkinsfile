@@ -31,7 +31,7 @@ pipeline {
             steps {
                 script {
                     sh '''
-                        curl -u faouizi.mzebla@ynov.com:${DOCKERHUB_PASSWORD_PSW} http://172.17.0.1:${PORT_EXPOSED}
+                        curl -u faouizi.mzebla@ynov.com:Louxor95100 http://172.17.0.1:${PORT_EXPOSED}
                     '''
                 }
             }
