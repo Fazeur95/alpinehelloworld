@@ -67,43 +67,39 @@ pipeline {
              }
           }
       }    
-stage('Install Node.js') {
+stage('Install Node.js and Heroku CLI') {
     agent any
     steps {
         script {
             sh '''
-                curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.1/install.sh | bash
-                export NVM_DIR="$HOME/.nvm"
-                [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
-                nvm install 14
-                nvm use 14
+                curl -sL https://deb.nodesource.com/setup_14.x | sudo -E bash -
+                sudo apt-get install -y nodejs
+                npm install -g heroku@7.68.0
             '''
         }
     }
 }
 
-
-
-     stage('Push image in staging and deploy it') {
-       when {
-              expression { GIT_BRANCH == 'origin/master' }
-            }
-      agent any
-      environment {
-          HEROKU_API_KEY = credentials('heroku_api_key')
-      }  
-      steps {
-          script {
+stage('Push image in staging and deploy it') {
+    when {
+        expression { GIT_BRANCH == 'origin/master' }
+    }
+    agent any
+    environment {
+        HEROKU_API_KEY = credentials('heroku_api_key')
+    }  
+    steps {
+        script {
             sh '''
-              npm i -g heroku@7.68.0
-              heroku container:login
-              heroku create $STAGING || echo "project already exist"
-              heroku container:push -a $STAGING web
-              heroku container:release -a $STAGING web
+                heroku container:login
+                heroku create $STAGING || echo "project already exist"
+                heroku container:push -a $STAGING web
+                heroku container:release -a $STAGING web
             '''
-          }
         }
-     }
+    }
+}
+
 
 
 
