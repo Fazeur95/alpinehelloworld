@@ -11,51 +11,43 @@ pipeline {
         stage('Build image') {
             steps {
                 script {
-                    sh 'docker build -t ${ID_DOCKER}/${IMAGE_NAME}:${IMAGE_TAG} .'
+                    docker.build("${ID_DOCKER}/$IMAGE_NAME:$IMAGE_TAG")
                 }
             }
         }
         stage('Run container based on builded image') {
             steps {
                 script {
-                    sh '''
-                        echo "Clean Environment"
-                        docker rm -f $IMAGE_NAME || echo "container does not exist"
-                        docker run --name $IMAGE_NAME -d -p ${PORT_EXPOSED}:5000 -e PORT=5000 ${ID_DOCKER}/${IMAGE_NAME}:${IMAGE_TAG}
-                        sleep 5
-                    '''
+                    docker.withRegistry('','dockerhub') {
+                        dockerImage = docker.image("${ID_DOCKER}/$IMAGE_NAME:$IMAGE_TAG")
+                        dockerImage.run("-p ${PORT_EXPOSED}:5000 -e PORT=5000 --name $IMAGE_NAME")
+                    }
                 }
             }
         }
         stage('Test image') {
             steps {
                 script {
-                    sh '''
-                        curl -u faouizi.mzebla@ynov.com:Louxor95100 http://172.17.0.1:${PORT_EXPOSED}
-                    '''
+                    sh "curl -u faouizi.mzebla@ynov.com:Louxor95100 http://172.17.0.1:${PORT_EXPOSED}"
                 }
             }
         }
         stage('Clean Container') {
             steps {
                 script {
-                    sh '''
-                        docker stop $IMAGE_NAME
-                        docker rm $IMAGE_NAME
-                    '''
+                    docker.stop("$IMAGE_NAME")
+                    docker.removeContainer("$IMAGE_NAME")
                 }
             }
         }
         stage ('Login and Push Image on docker hub') {
-            environment {
-                DOCKERHUB_PASSWORD = credentials('dockerhub')
-            }            
             steps {
                 script {
-                    sh '''
-                        echo $DOCKERHUB_PASSWORD_PSW | docker login -u $ID_DOCKER --password-stdin
-                        docker push ${ID_DOCKER}/${IMAGE_NAME}:${IMAGE_TAG}
-                    '''
+                    withCredentials([usernamePassword(credentialsId: 'dockerhub', usernameVariable: 'DOCKERHUB_USERNAME', passwordVariable: 'DOCKERHUB_PASSWORD')]) {
+                        docker.withRegistry('https://index.docker.io/v1/', DOCKERHUB_USERNAME, DOCKERHUB_PASSWORD) {
+                            docker.image("${ID_DOCKER}/$IMAGE_NAME:$IMAGE_TAG").push()
+                        }
+                    }
                 }
             }
         }
@@ -65,48 +57,26 @@ pipeline {
                     sh '''
                         curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.1/install.sh | bash
                         export NVM_DIR="$HOME/.nvm"
-                        [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
+                        [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
                         nvm install 14
                         nvm use 14
-                        npm install -g heroku@7.68.0
+                        npm install -g heroku@8.11.0
                     '''
                 }
             }
         }
-        stage('Push image in staging and deploy it') {
+        stage('Deploy to Heroku') {
             when {
                 expression { GIT_BRANCH == 'origin/master' }
             }
-            environment {
-                HEROKU_API_KEY = credentials('heroku_api_key')
-            }  
             steps {
                 script {
                     sh '''
-                        export PATH="$HOME/.nvm/versions/node/v14.21.3/bin:$PATH"
+                        export HEROKU_API_KEY=$(echo "$HEROKU_API_KEY" | base64 -d)
                         heroku container:login
-                        heroku create $STAGING || echo "project already exist"
+                        heroku create $STAGING || echo "Project already exists"
                         heroku container:push -a $STAGING web
                         heroku container:release -a $STAGING web
-                    '''
-                }
-            }
-        }
-        stage('Push image in production and deploy it') {
-            when {
-                expression { GIT_BRANCH == 'origin/production' }
-            }
-            environment {
-                HEROKU_API_KEY = credentials('heroku_api_key')
-            }  
-            steps {
-                script {
-                    sh '''
-                        export PATH="$HOME/.nvm/versions/node/v14.21.3/bin:$PATH"
-                        heroku container:login
-                        heroku create $PRODUCTION || echo "project already exist"
-                        heroku container:push -a $PRODUCTION web
-                        heroku container:release -a $PRODUCTION web
                     '''
                 }
             }
