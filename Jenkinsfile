@@ -1,3 +1,5 @@
+@Library('shared-library')_
+
 pipeline {
     environment {
         ID_DOCKER = "${ID_DOCKER_PARAMS}"
@@ -53,7 +55,7 @@ pipeline {
             steps {
                 script {
                     sh '''
-                        echo $DOCKERHUB_PASSWORD_PSW | docker login -u $ID_DOCKER --password-stdin
+                        echo $DOCKERHUB_PASSWORD | docker login -u $ID_DOCKER --password-stdin
                         docker push ${ID_DOCKER}/${IMAGE_NAME}:${IMAGE_TAG}
                     '''
                 }
@@ -92,13 +94,31 @@ pipeline {
                 }
             }
         }
-    }
-      post {
-        success {
-            slackSend (color: '#00FF00', message: "SUCCESSFUL: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]' (${env.BUILD_URL}) - PROD URL => http://${PRODUCTION} , STAGING URL => http://${STAGING}")
+        stage('Push image in production and deploy it') {
+            when {
+                expression { GIT_BRANCH == 'origin/production' }
+            }
+            environment {
+                HEROKU_API_KEY = credentials('heroku_api_key')
+            }  
+            steps {
+                script {
+                    sh '''
+                        export PATH="$HOME/.nvm/versions/node/v14.21.3/bin:$PATH"
+                        heroku container:login
+                        heroku create $PRODUCTION || echo "project already exist"
+                        heroku container:push -a $PRODUCTION web
+                        heroku container:release -a $PRODUCTION web
+                    '''
+                }
+            }
         }
-        failure {
-            slackSend (color: '#FF0000', message: "FAILED: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]' (${env.BUILD_URL})")
-        }   
+    }
+    post {
+        always {
+            script {
+                slackNotifier(currentBuild.result)
+            }
+        }  
     }
 }
